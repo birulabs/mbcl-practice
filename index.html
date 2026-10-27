@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brain Dump HR Log</title>
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --card: #ffffff;
+    --text: #1f2430;
+    --muted: #667085;
+    --border: #d9dde5;
+    --accent: #3b5bdb;
+    --accent-text: #ffffff;
+    --warn-bg: #fff4e5;
+    --warn-text: #8a4b00;
+    --ok-bg: #e8f7ee;
+    --ok-text: #1d6b3c;
+    --chip: #eef1f6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14161b;
+      --card: #1d2027;
+      --text: #e7e9ee;
+      --muted: #9aa1ae;
+      --border: #343844;
+      --accent: #7b93f5;
+      --accent-text: #10131a;
+      --warn-bg: #3a2a12;
+      --warn-text: #f5c27a;
+      --ok-bg: #16331f;
+      --ok-text: #8fdcaa;
+      --chip: #272b34;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #14161b;
+    --card: #1d2027;
+    --text: #e7e9ee;
+    --muted: #9aa1ae;
+    --border: #343844;
+    --accent: #7b93f5;
+    --accent-text: #10131a;
+    --warn-bg: #3a2a12;
+    --warn-text: #f5c27a;
+    --ok-bg: #16331f;
+    --ok-text: #8fdcaa;
+    --chip: #272b34;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 1.5rem; margin: 0 0 4px; }
+  h2 { font-size: 1.1rem; margin: 0 0 12px; }
+  .sub { color: var(--muted); margin: 0 0 24px; }
+  section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .step { color: var(--muted); font-weight: 500; }
+  label { display: block; font-weight: 600; margin-bottom: 4px; }
+  .hint { color: var(--muted); font-size: 0.85rem; font-weight: 400; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  input, textarea {
+    width: 100%;
+    font: inherit;
+    color: var(--text);
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+  }
+  textarea { resize: vertical; }
+  .field { margin-bottom: 16px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  button {
+    font: inherit;
+    border: 1px solid var(--border);
+    background: var(--chip);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 8px 14px;
+    cursor: pointer;
+  }
+  button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); font-weight: 600; }
+  button.small { padding: 3px 8px; font-size: 0.8rem; }
+  button.copied { background: var(--ok-bg); color: var(--ok-text); }
+  .msg { padding: 10px 12px; border-radius: 8px; margin-top: 12px; font-size: 0.9rem; }
+  .msg.warn { background: var(--warn-bg); color: var(--warn-text); }
+  .msg.ok { background: var(--ok-bg); color: var(--ok-text); }
+  .hidden { display: none; }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; min-width: 760px; }
+  th, td { border-bottom: 1px solid var(--border); padding: 8px 6px; text-align: left; vertical-align: top; }
+  th { font-size: 0.85rem; color: var(--muted); font-weight: 600; }
+  td input[type="time"] { width: 110px; }
+  td textarea { min-height: 64px; }
+  .cell { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+  .dur { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .label { display: inline-block; font-size: 0.75rem; padding: 2px 8px; border-radius: 999px; background: var(--chip); }
+  .label.estimasi { background: var(--warn-bg); color: var(--warn-text); }
+  .rowwarn { color: var(--warn-text); font-size: 0.8rem; }
+  .count { color: var(--muted); font-size: 0.75rem; }
+  .count.over { color: var(--warn-text); font-weight: 600; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Brain Dump to HR Log</h1>
+  <p class="sub">Tuang cerita hari ini, salin prompt ke Claude, tempel balasannya, lalu salin per kolom ke Form Input Pekerjaan.</p>
+
+  <section>
+    <h2><span class="step">1.</span> Cerita hari ini</h2>
+    <div class="grid">
+      <div><label for="date">Tanggal</label><input type="date" id="date"></div>
+      <div><label for="workStart">Mulai kerja</label><input type="time" id="workStart" value="08:00"></div>
+      <div><label for="workEnd">Selesai kerja</label><input type="time" id="workEnd" value="17:00"></div>
+      <div><label for="breakStart">Istirahat mulai</label><input type="time" id="breakStart" value="12:00"></div>
+      <div><label for="breakEnd">Istirahat selesai</label><input type="time" id="breakEnd" value="13:00"></div>
+    </div>
+    <div class="field">
+      <label for="dump">Brain dump <span class="hint">Tulis bebas. Boleh tempel potongan chat, subjek email, atau nama file.</span></label>
+      <textarea id="dump" rows="8" placeholder="Pagi rapat koordinasi LDP, lalu revisi slide modul..."></textarea>
+    </div>
+    <div class="field">
+      <label for="longest">Aktivitas paling lama hari ini <span class="hint">Opsional</span></label>
+      <input type="text" id="longest" placeholder="Misal: revisi modul LDP Batch 12">
+    </div>
+    <div class="row">
+      <button class="primary" id="btnPrompt">Buat prompt</button>
+      <button id="btnClearDraft">Kosongkan draf</button>
+      <span class="hint" id="draftStatus"></span>
+    </div>
+    <div id="promptMsg" class="msg warn hidden"></div>
+  </section>
+
+  <section id="promptSection" class="hidden">
+    <h2><span class="step">2.</span> Salin prompt ke Claude</h2>
+    <textarea id="prompt" rows="10" readonly></textarea>
+    <div class="row" style="margin-top:8px"><button class="primary" id="btnCopyPrompt">Salin prompt</button></div>
+  </section>
+
+  <section>
+    <h2><span class="step">3.</span> Tempel balasan Claude</h2>
+    <textarea id="reply" rows="8" placeholder="| Mulai | Selesai | Durasi (menit) | Deskripsi | Label |"></textarea>
+    <div class="row" style="margin-top:8px"><button class="primary" id="btnParse">Tampilkan tabel</button></div>
+    <div id="parseMsg" class="msg warn hidden"></div>
+  </section>
+
+  <section id="resultSection" class="hidden">
+    <h2><span class="step">4.</span> Entri siap salin</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Start Time</th><th>End Time</th><th>Durasi (menit)</th><th>Deskripsi Pekerjaan</th><th>Label</th><th></th></tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div class="row" style="margin-top:8px"><button id="btnAddRow">Tambah baris</button></div>
+    <div id="totalMsg" class="msg"></div>
+  </section>
+</main>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var DRAFT_KEY = 'bdhr-draft-v1';
+  var MIN_ENTRY = 30;
+  var MAX_DESC = 500;
+  var rows = [];
+
+  function toMin(s) {
+    var m = String(s || '').trim().match(/^(\d{1,2})[.:](\d{2})$/);
+    if (!m) return null;
+    var h = +m[1], mi = +m[2];
+    if (h > 23 || mi > 59) return null;
+    return h * 60 + mi;
+  }
+  function fmt(m) {
+    return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
+  }
+  function todayISO() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function show(el, text, kind) {
+    el.textContent = text;
+    el.className = 'msg ' + kind;
+  }
+  function hide(el) { el.className = 'msg hidden'; }
+
+  function schedule() {
+    var ws = toMin($('workStart').value), we = toMin($('workEnd').value);
+    var bs = toMin($('breakStart').value), be = toMin($('breakEnd').value);
+    if (ws === null || we === null || bs === null || be === null) return null;
+    if (!(ws < bs && bs < be && be < we)) return null;
+    return { ws: ws, we: we, bs: bs, be: be, target: (we - ws) - (be - bs) };
+  }
+
+  function copyText(text, btn) {
+    function done() {
+      var old = btn.textContent;
+      btn.textContent = 'Tersalin';
+      btn.classList.add('copied');
+      setTimeout(function () { btn.textContent = old; btn.classList.remove('copied'); }, 1200);
+    }
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta);
+      done();
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, fallback);
+    } else {
+      fallback();
+    }
+  }
+
+  // Step 1-2: prompt
+  function buildPrompt() {
+    var msg = $('promptMsg');
+    var s = schedule();
+    var dump = $('dump').value.trim();
+    if (!s) { show(msg, 'Cek jam kerja dan istirahat: urutannya harus mulai kerja, istirahat mulai, istirahat selesai, selesai kerja.', 'warn'); return; }
+    if (!dump) { show(msg, 'Brain dump masih kosong.', 'warn'); return; }
+    hide(msg);
+    var longest = $('longest').value.trim();
+    var date = $('date').value || todayISO();
+    var p = [
+      'Kamu membantu saya menyusun laporan aktivitas harian untuk website HR.',
+      '',
+      'DATA',
+      'Tanggal: ' + date,
+      'Jam kerja: ' + fmt(s.ws) + ' sampai ' + fmt(s.we),
+      'Istirahat: ' + fmt(s.bs) + ' sampai ' + fmt(s.be) + ' (bukan entri)',
+      'Total waktu yang harus terisi: ' + s.target + ' menit',
+      'Aktivitas paling lama hari ini: ' + (longest || 'tidak disebut'),
+      '',
+      'BRAIN DUMP (cerita bebas, bisa berisi tempelan chat, email, atau nama file):',
+      '"""',
+      dump,
+      '"""',
+      '',
+      'ATURAN',
+      '1. Pecah brain dump menjadi aktivitas kerja. Abaikan hal yang bukan aktivitas kerja.',
+      '2. Deskripsi singkat, faktual, bahasa laporan kerja, DIAWALI KATA KERJA (contoh: "Mengembangkan modul LDP Batch 12"), maksimal ' + MAX_DESC + ' karakter. Jangan menambah detail yang tidak ada di brain dump. Jangan gunakan karakter | di dalam deskripsi.',
+      '3. Durasi minimal ' + MIN_ENTRY + ' menit per entri. Aktivitas di bawah ' + MIN_ENTRY + ' menit digabung dengan aktivitas yang topiknya paling dekat.',
+      '4. Entri berurutan tanpa jeda dan tanpa tumpang tindih: dari ' + fmt(s.ws) + ' sampai ' + fmt(s.bs) + ', lalu dari ' + fmt(s.be) + ' sampai ' + fmt(s.we) + '. Tidak ada entri yang melewati jam istirahat. Istirahat bukan entri.',
+      '5. Total durasi semua entri tepat ' + s.target + ' menit.',
+      '6. Aktivitas paling lama mendapat porsi waktu terbesar.',
+      '7. Kolom Label: tulis "disebut" jika durasi atau jamnya disebut di brain dump, tulis "estimasi" jika tidak.',
+      '8. Jam dalam format 24 jam HH:MM. Durasi dalam menit (angka saja).',
+      '',
+      'FORMAT BALASAN',
+      'Balas HANYA dengan tabel berikut, tanpa teks pembuka atau penutup:',
+      '',
+      '| Mulai | Selesai | Durasi (menit) | Deskripsi | Label |',
+      '|---|---|---|---|---|',
+      '| ' + fmt(s.ws) + ' | ' + fmt(s.ws + 90) + ' | 90 | Menyusun ... | estimasi |'
+    ].join('\n');
+    $('prompt').value = p;
+    $('promptSection').classList.remove('hidden');
+    $('promptSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // Step 3: parse pipe table
+  function parseReply(text) {
+    var out = [];
+    text.split(/\r?\n/).forEach(function (line) {
+      if (line.indexOf('|') === -1) return;
+      var cells = line.split('|').map(function (c) { return c.trim(); });
+      if (cells[0] === '') cells.shift();
+      if (cells.length && cells[cells.length - 1] === '') cells.pop();
+      if (cells.length < 4) return;
+      var start = toMin(cells[0]), end = toMin(cells[1]);
+      if (start === null || end === null) return; // header or separator
+      var desc, label;
+      if (cells.length >= 5) {
+        desc = cells.slice(3, cells.length - 1).join(' ');
+        label = cells[cells.length - 1];
+      } else {
+        desc = cells[3];
+        label = '';
+      }
+      out.push({
+        start: start,
+        end: end,
+        desc: desc.replace(/^\*+|\*+$/g, '').trim(),
+        label: /estim/i.test(label) ? 'estimasi' : (label ? 'disebut' : '')
+      });
+    });
+    return out;
+  }
+
+  // Step 4: table
+  function rowWarnings(r, s) {
+    var w = [];
+    var d = r.end - r.start;
+    if (d <= 0) w.push('Jam selesai harus setelah jam mulai.');
+    else if (d < MIN_ENTRY) w.push('Kurang dari ' + MIN_ENTRY + ' menit. Gabungkan dengan entri lain.');
+    if (s && r.start < s.be && r.end > s.bs) w.push('Melewati jam istirahat.');
+    if (s && (r.start < s.ws || r.end > s.we)) w.push('Di luar jam kerja.');
+    if (!r.desc.trim()) w.push('Deskripsi kosong.');
+    if (r.desc.length > MAX_DESC) w.push('Deskripsi lebih dari ' + MAX_DESC + ' karakter.');
+    return w;
+  }
+
+  function updateTotal() {
+    var s = schedule();
+    var total = 0, overlap = false;
+    var sorted = rows.slice().sort(function (a, b) { return a.start - b.start; });
+    rows.forEach(function (r) { total += Math.max(0, r.end - r.start); });
+    for (var i = 1; i < sorted.length; i++) {
+      if (sorted[i].start < sorted[i - 1].end) overlap = true;
+    }
+    var el = $('totalMsg');
+    var text = 'Total: ' + total + ' menit';
+    if (!s) {
+      show(el, text + '. Jam kerja di langkah 1 belum valid, total tidak bisa dicek.', 'warn');
+      return;
+    }
+    text += ' dari ' + s.target + ' menit jam kerja.';
+    var bad = rows.some(function (r) { return rowWarnings(r, s).length; });
+    if (total !== s.target) {
+      var diff = s.target - total;
+      text += diff > 0 ? ' Kurang ' + diff + ' menit.' : ' Lebih ' + (-diff) + ' menit.';
+    }
+    if (overlap) text += ' Ada entri yang jamnya tumpang tindih.';
+    if (bad) text += ' Ada baris dengan peringatan.';
+    show(el, total === s.target && !overlap && !bad ? text + ' Siap disalin.' : text, total === s.target && !overlap && !bad ? 'ok' : 'warn');
+  }
+
+  function copyBtn(getText) {
+    var b = document.createElement('button');
+    b.className = 'small';
+    b.type = 'button';
+    b.textContent = 'Salin';
+    b.addEventListener('click', function () { copyText(getText(), b); });
+    return b;
+  }
+
+  function renderTable() {
+    var tbody = $('tbody');
+    tbody.innerHTML = '';
+    var s = schedule();
+    rows.forEach(function (r, i) {
+      var tr = document.createElement('tr');
+
+      var tdNo = document.createElement('td');
+      tdNo.textContent = i + 1;
+
+      var startIn = document.createElement('input');
+      startIn.type = 'time';
+      startIn.value = fmt(r.start);
+      var endIn = document.createElement('input');
+      endIn.type = 'time';
+      endIn.value = fmt(r.end);
+
+      var durEl = document.createElement('span');
+      durEl.className = 'dur';
+      var warnEl = document.createElement('div');
+      warnEl.className = 'rowwarn';
+
+      var descIn = document.createElement('textarea');
+      descIn.value = r.desc;
+      var countEl = document.createElement('span');
+      countEl.className = 'count';
+
+      function refresh() {
+        var d = r.end - r.start;
+        durEl.textContent = d > 0 ? d : '-';
+        countEl.textContent = r.desc.length + '/' + MAX_DESC;
+        countEl.className = 'count' + (r.desc.length > MAX_DESC ? ' over' : '');
+        warnEl.textContent = rowWarnings(r, schedule()).join(' ');
+        updateTotal();
+      }
+
+      startIn.addEventListener('input', function () {
+        var v = toMin(startIn.value);
+        if (v !== null) { r.start = v; refresh(); }
+      });
+      endIn.addEventListener('input', function () {
+        var v = toMin(endIn.value);
+        if (v !== null) { r.end = v; refresh(); }
+      });
+      descIn.addEventListener('input', function () { r.desc = descIn.value; refresh(); });
+
+      function cell(children) {
+        var td = document.createElement('td');
+        var wrap = document.createElement('div');
+        wrap.className = 'cell';
+        children.forEach(function (c) { wrap.appendChild(c); });
+        td.appendChild(wrap);
+        return td;
+      }
+
+      var labelEl = document.createElement('span');
+      labelEl.className = 'label ' + r.label;
+      labelEl.textContent = r.label || '-';
+
+      var del = document.createElement('button');
+      del.className = 'small';
+      del.type = 'button';
+      del.textContent = 'Hapus';
+      del.addEventListener('click', function () { rows.splice(i, 1); renderTable(); });
+
+      tr.appendChild(tdNo);
+      tr.appendChild(cell([startIn, copyBtn(function () { return fmt(r.start); })]));
+      tr.appendChild(cell([endIn, copyBtn(function () { return fmt(r.end); })]));
+      tr.appendChild(cell([durEl, copyBtn(function () { return String(Math.max(0, r.end - r.start)); })]));
+      var descTd = cell([descIn, countEl, copyBtn(function () { return r.desc.trim(); }), warnEl]);
+      descTd.style.minWidth = '280px';
+      tr.appendChild(descTd);
+      tr.appendChild(cell([labelEl]));
+      tr.appendChild(cell([del]));
+      tbody.appendChild(tr);
+      refresh();
+    });
+    $('resultSection').classList.toggle('hidden', rows.length === 0);
+    updateTotal();
+  }
+
+  function handleParse() {
+    var msg = $('parseMsg');
+    var parsed = parseReply($('reply').value);
+    if (!parsed.length) {
+      show(msg, 'Tidak ada baris tabel yang terbaca. Pastikan balasan berisi tabel dengan pemisah | dan jam format HH:MM.', 'warn');
+      return;
+    }
+    hide(msg);
+    rows = parsed.sort(function (a, b) { return a.start - b.start; });
+    renderTable();
+    $('resultSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function addRow() {
+    var last = rows.length ? Math.max.apply(null, rows.map(function (r) { return r.end; })) : (schedule() ? schedule().ws : 480);
+    rows.push({ start: last, end: Math.min(last + 30, 23 * 60 + 59), desc: '', label: 'estimasi' });
+    renderTable();
+  }
+
+  // Optional: draft autosave
+  function saveDraft() {
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({
+        date: $('date').value, dump: $('dump').value, longest: $('longest').value
+      }));
+      $('draftStatus').textContent = 'Draf tersimpan di browser ini.';
+    } catch (e) {}
+  }
+  function loadDraft() {
+    try {
+      var d = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null');
+      if (!d) return;
+      if (d.date) $('date').value = d.date;
+      if (d.dump) $('dump').value = d.dump;
+      if (d.longest) $('longest').value = d.longest;
+      if (d.dump) $('draftStatus').textContent = 'Draf sebelumnya dipulihkan.';
+    } catch (e) {}
+  }
+  function clearDraft() {
+    if (!confirm('Kosongkan brain dump dan aktivitas paling lama?')) return;
+    $('dump').value = '';
+    $('longest').value = '';
+    $('date').value = todayISO();
+    try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
+    $('draftStatus').textContent = 'Draf dikosongkan.';
+  }
+
+  $('date').value = todayISO();
+  loadDraft();
+  ['date', 'dump', 'longest'].forEach(function (id) { $(id).addEventListener('input', saveDraft); });
+  ['workStart', 'workEnd', 'breakStart', 'breakEnd'].forEach(function (id) {
+    $(id).addEventListener('input', function () { if (rows.length) renderTable(); });
+  });
+  $('btnPrompt').addEventListener('click', buildPrompt);
+  $('btnCopyPrompt').addEventListener('click', function () { copyText($('prompt').value, $('btnCopyPrompt')); });
+  $('btnParse').addEventListener('click', handleParse);
+  $('btnAddRow').addEventListener('click', addRow);
+  $('btnClearDraft').addEventListener('click', clearDraft);
+})();
+</script>
+</body>
+</html>
